@@ -1,0 +1,1 @@
+Compile the source code from `https://github.com/bri3d/VW_Flash/tree/master/lib/lzss` for your target platform/os and place the executable in this directory with a name of 'lzss.exe' or 'lzss' (.exe when targeting windows)

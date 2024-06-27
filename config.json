@@ -1,0 +1,22 @@
+{
+    "mongo_uri": "mongodb://localhost:27017",
+    "max_files_per_customer": 5,
+    "privateKey": "WNPYNGaS46teoPL1opXXY1ULmb0iHE155QgE8tPO",
+    "apps": {
+        "comport-pro-tuning-map-editor": {
+            "accessFieldName": "has_access_to_map_editor"
+        },
+        "shop-admin": {
+            "accessFieldName": "has_access_to_shop_admin"
+        }
+    },
+    "micros_definitions": {
+        "valid_micro_types": ["ecu", "tcu", "cpc"],
+        "compiledDefinitionsLocation": "C:\\Users\\worw7\\Documents\\Comport\\deployer-test-data\\micros"
+    },
+    "release_channels": [
+        "dev",
+        "test",
+        "prod"
+    ]
+}
