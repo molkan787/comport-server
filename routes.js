@@ -26,7 +26,7 @@ const ValuesServerController = require('./controllers/values-server')
 const CustomerInfoControllers = require('./controllers/admin/customer-info');
 const FlashDataPackerControllers = require('./controllers/flash-data-packer');
 const { GetTLSCertThumbprint } = require('./controllers/security');
-const { createCustomer: createCustomerWebhook } = require('./controllers/webhooks/create-customer');
+const customerWebhooks = require('./controllers/webhooks/create-customer');
 
 /**
  * @param {import('express').Express} app 
@@ -160,7 +160,8 @@ function mountRoutes(app){
     })
 
     // Webhooks
-    app.post('/webhooks/create-customer', createCustomerWebhook)
+    app.post('/webhooks/create-customer', customerWebhooks.createCustomer)
+    app.post('/webhooks/update-customer', customerWebhooks.updateCustomer)
 }
 
 module.exports = {

@@ -1,3 +1,4 @@
+const { ObjectId } = require("mongodb")
 const { coll } = require("../db")
 const { IsValidString } = require("../jsutils")
 
@@ -15,6 +16,29 @@ module.exports = class AutoCustomerCreator{
         const customerData = this._craftCustomerData(orderData)
         const customersCollection = coll('comport', 'users')
         await customersCollection.insertOne(customerData)
+    }
+
+    static async updateFromOrderData(orderData){
+        const customerData = this._craftCustomerData(orderData)
+        const customersCollection = coll('comport', 'users')
+        const customer = await customersCollection.findOne({
+            email: customerData.email,
+            vin: customerData.vin,
+        })
+        if(customer){
+            await customersCollection.updateOne(
+                {
+                    _id: ObjectId(customer._id)
+                },
+                {
+                    $set: {
+                        enabled_tunes: customerData.enabled_tunes
+                    }
+                }
+            )
+        }else{
+            throw new Error('Customer not found')
+        }
     }
 
     static _craftCustomerData(orderData){
