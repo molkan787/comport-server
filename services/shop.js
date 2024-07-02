@@ -166,7 +166,6 @@ class ShopService{
      * @param {{ ecu: string, tcu: string, cpc: string }} micros 
      */
     static async _calculateRequiredCredit(micros){
-        console.log('micros:', micros)
         const { ecu, tcu, cpc } = micros
         const _list = []
         if(ecu) _list.push(ecu)
@@ -177,11 +176,8 @@ class ShopService{
                 $in: _list
             }
         }).toArray()
-        console.log('docs:', docs)
         const costs = docs.map(d => parseInt(d.value))
-        console.log('costs:', costs)
         const totalCost = costs.reduce((t, v) => t + v, 0)
-        console.log('totalCost:', totalCost)
         return totalCost
     }
 
