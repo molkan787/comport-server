@@ -3,7 +3,7 @@ const MemoryStream = require('memorystream');
 const { coll } = require('../db')
 const NoPermissionError = require('../framework/errors/NoPermissionError')
 const { IsValidString, StreamToBuffer, IsValidObject } = require('../jsutils')
-const { arrayToMap } = require('../utils')
+const { arrayToMap, numOrDefault } = require('../utils')
 const { CUSTOMER_STATUS } = require('./customers')
 const GenericEntriesService = require('./genericEntries')
 const { getFlashes, sanitizeFolderName, uploadFlashFile, deleteFlashFile } = require('./tunes');
@@ -95,6 +95,20 @@ class ShopService{
             const hasAccessToMicros = this.HasShopAccessToMicros(shopData, micros)
             if(!hasAccessToMicros) throw new NoPermissionError('Shop does not have access to the specified module(s)')
         }
+
+        const customer = await customersCollection.findOne({ _id: ObjectId(customerId) })
+        const changedMicros = { ecu: '', tcu: '', cpc: '' }
+        if(customer.ecu !== micros.ecu) changedMicros.ecu = micros.ecu
+        if(customer.tcu !== micros.tcu) changedMicros.tcu = micros.tcu
+        if(customer.cpc !== micros.cpc) changedMicros.ecu = micros.cpc
+
+        // Credits check and Consomption
+        const microsTotalCost = await this._calculateRequiredCredit(changedMicros)
+        const creditResult = await this.consumeCredits(shopId, microsTotalCost)
+        if(creditResult !== 'consumed'){
+            throw new BadRequestError(`Could not consume shop\'s credit. [${creditResult}]`)
+        }
+
         await Promise.all([
             customersCollection.updateOne(
                 { _id: ObjectId(customerId) },
@@ -126,6 +140,14 @@ class ShopService{
             const hasAccessToMicros = this.HasShopAccessToMicros(shopData, micros)
             if(!hasAccessToMicros) throw new NoPermissionError('Shop does not have access to the specified module(s)')
         }
+        
+        // Credits check and Consomption
+        const microsTotalCost = await this._calculateRequiredCredit(micros)
+        const creditResult = await this.consumeCredits(shopId, microsTotalCost)
+        if(creditResult !== 'consumed'){
+            throw new BadRequestError(`Could not consume shop\'s credit. [${creditResult}]`)
+        }
+
         const result = await customersCollection.insertOne({
             ...micros, email, vin, vehicle,
             status: CUSTOMER_STATUS.Pending,
@@ -140,6 +162,29 @@ class ShopService{
         return { customerId }
     }
 
+    /**
+     * @param {{ ecu: string, tcu: string, cpc: string }} micros 
+     */
+    static async _calculateRequiredCredit(micros){
+        console.log('micros:', micros)
+        const { ecu, tcu, cpc } = micros
+        const _list = []
+        if(ecu) _list.push(ecu)
+        if(tcu) _list.push(tcu)
+        if(cpc) _list.push(cpc)
+        const docs = await coll('kvs', 'micros_credit_costs').find({
+            key: {
+                $in: _list
+            }
+        }).toArray()
+        console.log('docs:', docs)
+        const costs = docs.map(d => parseInt(d.value))
+        console.log('costs:', costs)
+        const totalCost = costs.reduce((t, v) => t + v, 0)
+        console.log('totalCost:', totalCost)
+        return totalCost
+    }
+
     static _ValidateShopAccessToVehicle(shopData, vehicleSlug){
         const { allowed_vehicle } = shopData
         if(!Array.isArray(allowed_vehicle) || allowed_vehicle.indexOf(vehicleSlug) == -1){
@@ -148,7 +193,6 @@ class ShopService{
     }
 
     /**
-     * 
      * @param {{ ecu: string, tcu: string, cpc: string }} container 
      * @param {string} vehicleSlug 
      */
@@ -211,7 +255,12 @@ class ShopService{
     static async _GetShopData(shopId){
         return await shopsCollection.findOne(
             { _id: ObjectId(shopId) },
-            { projection: { _id: 1, allowed_modules: 1 } }
+            { projection: {
+                    _id: 1,
+                    allowed_modules: 1,
+                    allowed_vehicle: 1,
+                } 
+            }
         )
     }
 
@@ -232,6 +281,12 @@ class ShopService{
         }else{
             return []
         }
+    }
+
+    static async GetShopPartialData(shopId, props){
+        const doc = await shopsCollection.findOne({ _id: ObjectId(shopId) }, { projection: props })
+        delete doc._id
+        return doc
     }
 
     static async _GetShopVehicleModules(shopId, vehicleSlug){
@@ -291,6 +346,40 @@ class ShopService{
         }else{
             return null
         }
+    }
+
+    static async GetShopCredit(shopId){
+        const doc = await shopsCollection.findOne({ _id: ObjectId(shopId) }, { projection: { credit: 1 } })
+        return numOrDefault(doc.credit, 0)
+    }
+
+    /**
+     * Removes specified amount of credits from the shop user's credits
+     * @param {string} shopId Shop's Id
+     * @param {number} amount Amount of credits to consume (the value must be a POSITIVE Number)
+     * @returns {'not_enough_credit' | 'consumed'} returns result status
+     */
+    static async consumeCredits(shopId, amount){
+        const dec = -amount
+        const doc = await shopsCollection.findOne({ _id: ObjectId(shopId) })
+        if(!doc){
+            throw new Error('Shop not found')
+        }
+        const available_credit = doc.credit || 0
+        if(available_credit < amount){
+            return 'not_enough_credit'
+        }
+        await shopsCollection.updateOne(
+            {
+                _id: ObjectId(shopId)
+            },
+            {
+                $inc: {
+                    credit: dec
+                }
+            }
+        )
+        return 'consumed'
     }
 
     static _groupName = {

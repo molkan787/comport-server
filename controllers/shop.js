@@ -388,15 +388,30 @@ module.exports.deleteFile = (req, res) => WrapRouteHandler(
     { EmptyResponse: true }
 )
 
+module.exports.getShopCredit = (req, res) => WrapRouteHandler(
+    req, res, null, async () => {
+        const shopId = req.user._id
+        const Credit = await ShopService.GetShopCredit(shopId)
+        return {
+            Credit
+        }
+    }
+)
+
 module.exports.getShopWebAppInitialData = (req, res) => WrapRouteHandler(
     req, res, null,
     async () => {
         const shopId = req.user._id
-        const micros = await ShopService.GetShopAllowedModules(shopId)
+        // const micros = await ShopService.GetShopAllowedModules(shopId)
         const vehicles = await ShopService.GetShopAllowedVehicles(shopId)
+        const data = await ShopService.GetShopPartialData(shopId, {
+            allowed_modules: true,
+            credit: true,
+        })
         return {
-            AllowedMicros: micros,
-            AllowedVehicles: vehicles
+            AllowedMicros: data.allowed_modules || ({ ecus: [], tcus: [],  cpcs: [] }),
+            AllowedVehicles: vehicles,
+            Credit: data.credit,
         }
     }
 )

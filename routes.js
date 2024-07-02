@@ -81,6 +81,7 @@ function mountRoutes(app){
     app.post('/prv/shop/upload-file', shop.uploadFile)
     app.delete('/prv/shop/delete-file/:fileId', shop.deleteFile)
     app.get('/prv/shop/webapp/initial-data', shop.getShopWebAppInitialData)
+    app.get('/prv/shop/webapp/shop-credit', shop.getShopCredit)
 
     app.get('/pub/app-updates', appupdates)
 
