@@ -49,6 +49,13 @@ if(!DEV){
   app.use(speedLimiter);
 }
 
+app.use('/webhooks/*', express.text({ limit: '24mb', type: 'application/json' }))
+app.use('/webhooks/*', (req, res, next) => {
+  req.textBody = req.body
+  req.body = JSON.parse(req.body)
+  return next()
+})
+
 app.use(express.json({ limit: '4mb' }))
 app.use(express.text({ limit: '24mb' }))
 app.use(morgan('combined'))

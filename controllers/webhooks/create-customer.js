@@ -1,16 +1,16 @@
 const NoPermissionError = require("../../framework/errors/NoPermissionError")
 const { WrapRouteHandler } = require("../../helpers/controller-helpers")
 const AutoCustomerCreator = require("../../services/auto-customer-creator")
+const crypto = require('crypto')
 
-const AUTH_SECRET = 'test_secret_xxxxxxxxxxxxxxxxxxxxxx'
+const CREATE_AUTH_SECRET = '`}s[/2SiKPIi~#1dwS%ts=sr^/5M [DgySmwi|IPa'
+const UPDATE_AUTH_SECRET = '`}s[/2SiKPIi~#1dwS%ts=sr^/5M [DgySmwi|IPa'
 
 module.exports = {
     createCustomer(req, res){
         return WrapRouteHandler(req, res, null, async () => {
 
-            if(req.headers.secret !== AUTH_SECRET){
-                throw new NoPermissionError('Authentication Failed.')
-            }
+            valdiateSignature(req, CREATE_AUTH_SECRET)
 
             const orderData = req.body
             if(orderData.status === 'processing'){
@@ -30,12 +30,10 @@ module.exports = {
     updateCustomer(req, res){
         return WrapRouteHandler(req, res, null, async () => {
             
-            if(req.headers.secret !== AUTH_SECRET){
-                throw new NoPermissionError('Authentication Failed.')
-            }
+            valdiateSignature(req, UPDATE_AUTH_SECRET)
 
             const orderData = req.body
-            if(orderData.status === '---'){
+            if(orderData.status === 'processing'){
                 try {
                     await AutoCustomerCreator.updateFromOrderData(req.body)
                     return { status: 'ok' }
@@ -48,5 +46,14 @@ module.exports = {
             }
             return { status: 'failed' }
         })
+    }
+}
+
+function valdiateSignature(req, secret){
+    const plainTextData = req.textBody
+    const provided_signature = (req.headers['X-WC-Webhook-Signature'] || req.headers['x-wc-webhook-signature'] || '').trim()
+    const calculated_signature = crypto.createHmac('sha256', secret).update(plainTextData).digest("base64")
+    if(provided_signature !== calculated_signature){
+        throw new NoPermissionError('Security Check Failed.')
     }
 }
