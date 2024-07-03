@@ -269,13 +269,50 @@ class ShopService{
         })
     }
 
-    static async GetShopAllowedVehicles(shopId){
+    static async GetShopAllowedVehicles(shopId, populateCosts){
         const shopDoc = await shopsCollection.findOne({ _id: ObjectId(shopId) })
         if(shopDoc && Array.isArray(shopDoc.allowed_vehicle) && shopDoc.allowed_vehicle.length > 0){
-            const docs = await vehiclesCollection.find({ slug: { $in: shopDoc.allowed_vehicle } }).toArray()
-            return docs
+            const vehicles = await vehiclesCollection.find({ slug: { $in: shopDoc.allowed_vehicle } }).toArray()
+            if(populateCosts){
+                await this._populateVehiclesCosts(vehicles)
+            }
+            return vehicles
         }else{
             return []
+        }
+    }
+
+    static async _populateVehiclesCosts(vehicles){
+        const modulesSet = new Set()
+        for(let i = 0; i < vehicles.length; i++){
+            const { ecu, tcu, cpc } = vehicles[i].modules || {}
+            if(ecu) modulesSet.add(ecu)
+            if(tcu) modulesSet.add(tcu)
+            if(cpc) modulesSet.add(cpc)
+        }
+    
+        const modulesList = await coll('kvs', 'micros_credit_costs').find(
+            {
+                key: {
+                    $in: Array.from(modulesSet.values())
+                }
+            }
+        ).toArray()
+
+        const modulesCostsMap = new Map()
+        for(let i = 0; i < modulesList.length; i++){
+            const m = modulesList[i]
+            modulesCostsMap.set(m.key, parseInt(m.value))
+        }
+
+        for(let i = 0; i < vehicles.length; i++){
+            const v = vehicles[i]
+            let cost = 0
+            const { ecu, tcu, cpc } = v.modules || {}
+            cost += (ecu && modulesCostsMap.get(ecu)) || 0
+            cost += (tcu && modulesCostsMap.get(tcu)) || 0
+            cost += (cpc && modulesCostsMap.get(cpc)) || 0
+            v.cost = cost
         }
     }
 

@@ -403,7 +403,7 @@ module.exports.getShopWebAppInitialData = (req, res) => WrapRouteHandler(
     async () => {
         const shopId = req.user._id
         // const micros = await ShopService.GetShopAllowedModules(shopId)
-        const vehicles = await ShopService.GetShopAllowedVehicles(shopId)
+        const vehicles = await ShopService.GetShopAllowedVehicles(shopId, true)
         const data = await ShopService.GetShopPartialData(shopId, {
             allowed_modules: true,
             credit: true,
