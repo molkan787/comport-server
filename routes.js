@@ -27,6 +27,7 @@ const CustomerInfoControllers = require('./controllers/admin/customer-info');
 const FlashDataPackerControllers = require('./controllers/flash-data-packer');
 const { GetTLSCertThumbprint } = require('./controllers/security');
 const customerWebhooks = require('./controllers/webhooks/create-customer');
+const shopCreditWebhooks = require('./controllers/webhooks/shop-credit');
 
 /**
  * @param {import('express').Express} app 
@@ -162,6 +163,7 @@ function mountRoutes(app){
     // Webhooks
     app.post('/webhooks/create-customer', customerWebhooks.createCustomer)
     app.post('/webhooks/update-customer', customerWebhooks.updateCustomer)
+    app.post('/webhooks/add-shop-credit', shopCreditWebhooks.AddShopCredit)
 }
 
 module.exports = {
