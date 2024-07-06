@@ -66,13 +66,14 @@ class ShopService{
         return csid === _shopId && _shopId.length > 0
     }
 
-    static HasShopAccessToMicros(shopData, micros){
+    static HasShopAccessToMicros(shopData, micros, vehicleData){
         const { ecus, tcus, cpcs } = shopData.allowed_modules || {}
         const { ecu, tcu, cpc } = micros
+        const { modules } = vehicleData || {}
         return (
-            (IsValidString(ecu) ? ecus.includes(ecu) : true) &&
-            (IsValidString(tcu) ? tcus.includes(tcu) : true) &&
-            (IsValidString(cpc) ? cpcs.includes(cpc) : true)
+            ((IsValidString(ecu) ? ecus.includes(ecu) : true) || (modules && modules.ecu === ecu)) &&
+            ((IsValidString(tcu) ? tcus.includes(tcu) : true) || (modules && modules.tcu === tcu)) &&
+            ((IsValidString(cpc) ? cpcs.includes(cpc) : true) || (modules && modules.cpc === cpc))
         )
     }
 
@@ -82,19 +83,32 @@ class ShopService{
         const hasAccess = await this.HasShopAccessToCustomer(shopId, customerId)
         if(!hasAccess) throw new NoPermissionError('Shop does not have access to the specified customer')
         const shopData = await shopsCollection.findOne({ _id: ObjectId(shopId) })
-        let { ecu, tcu, cpc, vehicle } = update
-        ecu = IsValidString(ecu) ? ecu : ''
-        tcu = IsValidString(tcu) ? tcu : ''
-        cpc = IsValidString(cpc) ? cpc : ''
-        vehicle = IsValidString(vehicle) ? vehicle : ''
-        const micros = { ecu, tcu, cpc }
-        if(IsValidString(vehicle)){
-            this._ValidateShopAccessToVehicle(shopData, vehicle)
-            await this._PutVehicleMicros(micros, vehicle)
-        }else{
-            const hasAccessToMicros = this.HasShopAccessToMicros(shopData, micros)
-            if(!hasAccessToMicros) throw new NoPermissionError('Shop does not have access to the specified module(s)')
+        let { ecu, tcu, cpc, vehicle: vehicleSlug } = update
+        const micros = { ecu: '', tcu: '', cpc: '' }
+
+        const selected_modules = {
+            ecu: IsValidString(ecu) ? ecu : '',
+            tcu: IsValidString(tcu) ? tcu : '',
+            cpc: IsValidString(cpc) ? cpc : ''
         }
+
+        const vehicleData = await this._GetVehicleData(vehicleSlug)
+        if(vehicleData){
+            this._ValidateShopAccessToVehicle(shopData, vehicleSlug)
+        }
+
+        const hasAccessToMicros = this.HasShopAccessToMicros(shopData, selected_modules, vehicleData)
+        if(!hasAccessToMicros){
+            throw new NoPermissionError('Shop does not have access to the specified module(s)')
+        }
+
+        if(vehicleData){
+            await this._PutVehicleMicros(micros, vehicleData)
+        }
+
+        if(IsValidString(ecu)) micros.ecu = ecu
+        if(IsValidString(tcu)) micros.tcu = tcu
+        if(IsValidString(cpc)) micros.cpc = cpc
 
         const customer = await customersCollection.findOne({ _id: ObjectId(customerId) })
         const changedMicros = { ecu: '', tcu: '', cpc: '' }
@@ -113,7 +127,7 @@ class ShopService{
             customersCollection.updateOne(
                 { _id: ObjectId(customerId) },
                 {
-                    $set: { ...micros, vehicle }
+                    $set: { ...micros, vehicle: vehicleSlug }
                 }
             ),
             Array.isArray(update.filesAcccess) ? filesAccessCollection.updateOne(
@@ -126,20 +140,34 @@ class ShopService{
 
     static async CreateShopCustomer(shopId, customerData){
         const { email, vin, filesAcccess } = customerData
-        let { ecu, tcu, cpc, vehicle } = customerData
-        ecu = IsValidString(ecu) ? ecu : ''
-        tcu = IsValidString(tcu) ? tcu : ''
-        cpc = IsValidString(cpc) ? cpc : ''
-        vehicle = IsValidString(vehicle) ? vehicle : ''
-        const micros = { ecu, tcu, cpc }
         const shopData = await this._GetShopData(shopId)
-        if(IsValidString(vehicle)){
-            this._ValidateShopAccessToVehicle(shopData, vehicle)
-            await this._PutVehicleMicros(micros, vehicle)
-        }else{
-            const hasAccessToMicros = this.HasShopAccessToMicros(shopData, micros)
-            if(!hasAccessToMicros) throw new NoPermissionError('Shop does not have access to the specified module(s)')
+        let { ecu, tcu, cpc, vehicle } = customerData
+        const micros = { ecu: '', tcu: '', cpc: '' }
+
+        const selected_modules = {
+            ecu: IsValidString(ecu) ? ecu : '',
+            tcu: IsValidString(tcu) ? tcu : '',
+            cpc: IsValidString(cpc) ? cpc : ''
         }
+
+        const vehicleData = await this._GetVehicleData(vehicleSlug)
+        if(vehicleData){
+            this._ValidateShopAccessToVehicle(shopData, vehicleSlug)
+        }
+
+        const hasAccessToMicros = this.HasShopAccessToMicros(shopData, selected_modules, vehicleData)
+        if(!hasAccessToMicros){
+            throw new NoPermissionError('Shop does not have access to the specified module(s)')
+        }
+
+        if(vehicleData){
+            await this._PutVehicleMicros(micros, vehicleData)
+        }
+
+        if(IsValidString(ecu)) micros.ecu = ecu
+        if(IsValidString(tcu)) micros.tcu = tcu
+        if(IsValidString(cpc)) micros.cpc = cpc
+
         
         // Credits check and Consomption
         const microsTotalCost = await this._calculateRequiredCredit(micros)
@@ -189,15 +217,23 @@ class ShopService{
     }
 
     /**
-     * @param {{ ecu: string, tcu: string, cpc: string }} container 
      * @param {string} vehicleSlug 
      */
-    static async _PutVehicleMicros(container, vehicleSlug){
+    static async _GetVehicleData(vehicleSlug){
         const vehicle = await vehiclesCollection.findOne({ slug: vehicleSlug })
+        return vehicle
+    }
+
+    /**
+     * @param {{ ecu: string, tcu: string, cpc: string }} container 
+     * @param {Record<string, any>} vehicle 
+     */
+    static async _PutVehicleMicros(container, vehicle){
         const m = vehicle.modules || {}
         container.ecu = m.ecu || ''
         container.tcu = m.tcu || ''
         container.cpc = m.cpc || ''
+        return vehicle
     }
 
     static async GetShopFiles(shopId){
