@@ -52,7 +52,11 @@ if(!DEV){
 app.use('/webhooks/*', express.text({ limit: '24mb', type: 'application/json' }))
 app.use('/webhooks/*', (req, res, next) => {
   req.textBody = req.body
-  req.body = JSON.parse(req.body)
+  try {
+    req.body = JSON.parse(req.body)
+  } catch (error) {
+    // silence
+  }
   return next()
 })
 
