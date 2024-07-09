@@ -87,7 +87,7 @@ class ShopService{
         const micros = { ecu: '', tcu: '', cpc: '' }
 
         const selected_modules = {
-            ecu: IsValidString(ecu) ? ecu : '',
+            ecu: '', //IsValidString(ecu) ? ecu : '',
             tcu: IsValidString(tcu) ? tcu : '',
             cpc: IsValidString(cpc) ? cpc : ''
         }
@@ -106,7 +106,7 @@ class ShopService{
             await this._PutVehicleMicros(micros, vehicleData)
         }
 
-        if(IsValidString(ecu)) micros.ecu = ecu
+        // if(IsValidString(ecu)) micros.ecu = ecu
         if(IsValidString(tcu)) micros.tcu = tcu
         if(IsValidString(cpc)) micros.cpc = cpc
 
@@ -141,11 +141,11 @@ class ShopService{
     static async CreateShopCustomer(shopId, customerData){
         const { email, vin, filesAcccess } = customerData
         const shopData = await this._GetShopData(shopId)
-        let { ecu, tcu, cpc, vehicle } = customerData
+        let { ecu, tcu, cpc, vehicle: vehicleSlug } = customerData
         const micros = { ecu: '', tcu: '', cpc: '' }
 
         const selected_modules = {
-            ecu: IsValidString(ecu) ? ecu : '',
+            ecu: '', //IsValidString(ecu) ? ecu : '',
             tcu: IsValidString(tcu) ? tcu : '',
             cpc: IsValidString(cpc) ? cpc : ''
         }
@@ -164,7 +164,7 @@ class ShopService{
             await this._PutVehicleMicros(micros, vehicleData)
         }
 
-        if(IsValidString(ecu)) micros.ecu = ecu
+        // if(IsValidString(ecu)) micros.ecu = ecu
         if(IsValidString(tcu)) micros.tcu = tcu
         if(IsValidString(cpc)) micros.cpc = cpc
 
@@ -177,7 +177,7 @@ class ShopService{
         }
 
         const result = await customersCollection.insertOne({
-            ...micros, email, vin, vehicle,
+            ...micros, email, vin, vehicle: vehicleSlug,
             status: CUSTOMER_STATUS.Pending,
             shopId: shopId.toString()
         })
@@ -231,8 +231,8 @@ class ShopService{
     static async _PutVehicleMicros(container, vehicle){
         const m = vehicle.modules || {}
         container.ecu = m.ecu || ''
-        container.tcu = m.tcu || ''
-        container.cpc = m.cpc || ''
+        // container.tcu = m.tcu || ''
+        // container.cpc = m.cpc || ''
         return vehicle
     }
 
@@ -355,6 +355,18 @@ class ShopService{
     static async GetShopPartialData(shopId, props){
         const doc = await shopsCollection.findOne({ _id: ObjectId(shopId) }, { projection: props })
         delete doc._id
+        if(props.allowed_modules){
+            const { ecus, tcus, cpcs } = doc.allowed_modules
+            const modulesList = await coll('kvs', 'micros_credit_costs').find(
+                {
+                    key: {
+                        $in: [].concat(ecus, tcus, cpcs)
+                    }
+                }
+            ).toArray()
+            const costs = arrayToMap(modulesList, m => m.key, m => m.value)
+            doc.modules_costs = costs
+        }
         return doc
     }
 

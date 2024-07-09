@@ -412,6 +412,7 @@ module.exports.getShopWebAppInitialData = (req, res) => WrapRouteHandler(
             AllowedMicros: data.allowed_modules || ({ ecus: [], tcus: [],  cpcs: [] }),
             AllowedVehicles: vehicles,
             Credit: data.credit,
+            ModulesCosts: data.modules_costs
         }
     }
 )
