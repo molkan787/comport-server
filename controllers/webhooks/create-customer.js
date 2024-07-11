@@ -2,6 +2,7 @@ const NoPermissionError = require("../../framework/errors/NoPermissionError")
 const { WrapRouteHandler } = require("../../helpers/controller-helpers")
 const AutoCustomerCreator = require("../../services/auto-customer-creator")
 const crypto = require('crypto')
+const { shouldSkipRequest } = require("./_shared_funcs")
 
 const CREATE_AUTH_SECRET = '`}s[/2SiKPIi~#1dwS%ts=sr^/5M [DgySmwi|IPa'
 const UPDATE_AUTH_SECRET = '`}s[/2SiKPIi~#1dwS%ts=sr^/5M [DgySmwi|IPa'
@@ -9,6 +10,10 @@ const UPDATE_AUTH_SECRET = '`}s[/2SiKPIi~#1dwS%ts=sr^/5M [DgySmwi|IPa'
 module.exports = {
     createCustomer(req, res){
         return WrapRouteHandler(req, res, null, async () => {
+            if(shouldSkipRequest(req)){
+                console.log(`[Webhook.createCustomer]: Skipped Test Request`)
+                return '' // returning an empty response with status code 200 (ok)
+            }
 
             valdiateSignature(req, CREATE_AUTH_SECRET)
 
@@ -29,6 +34,10 @@ module.exports = {
     },
     updateCustomer(req, res){
         return WrapRouteHandler(req, res, null, async () => {
+            if(shouldSkipRequest(req)){
+                console.log(`[Webhook.updateCustomer]: Skipped Test Request`)
+                return '' // returning an empty response with status code 200 (ok)
+            }
             
             valdiateSignature(req, UPDATE_AUTH_SECRET)
 

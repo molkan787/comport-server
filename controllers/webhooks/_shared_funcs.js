@@ -1,5 +1,6 @@
 const NoPermissionError = require("../../framework/errors/NoPermissionError")
 const crypto = require('crypto')
+const { IsValidObject } = require("../../jsutils")
 
 module.exports = {
     valdiateSignature(req, secret){
@@ -9,5 +10,9 @@ module.exports = {
         if(provided_signature !== calculated_signature){
             throw new NoPermissionError('Security Check Failed.')
         }
+    },
+    shouldSkipRequest(req){
+        const contentType = req.headers['Content-Type'] || req.headers['content-type'] || ''
+        return contentType !== 'application/json' || !IsValidObject(req.body)
     }
 }

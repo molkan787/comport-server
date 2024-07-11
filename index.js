@@ -50,10 +50,14 @@ if(!DEV){
 }
 
 app.use('/webhooks/*', express.text({ limit: '24mb', type: 'application/json' }))
+app.use('/webhooks/*', express.text({ limit: '24mb', type: 'application/x-www-form-urlencoded' }))
 app.use('/webhooks/*', (req, res, next) => {
   req.textBody = req.body
   try {
-    req.body = JSON.parse(req.body)
+    const contentType = req.headers['Content-Type'] || req.headers['content-type'] || ''
+    if(contentType === 'application/json'){
+      req.body = JSON.parse(req.body)
+    }
   } catch (error) {
     // silence
   }
