@@ -2,6 +2,8 @@ const { StreamToBuffer } = require('../../jsutils');
 const { Readable } = require('stream');
 const { ObjectId } = require('mongodb');
 const { FoldersCollection, FlashesBucket, GetFolderIdByName } = require('../../services/tunes');
+const { coll } = require('../../db');
+const { AllowRefNumbers } = require('../../dynamic_config');
 
 class TunesFilesService{
 
@@ -28,24 +30,12 @@ class TunesFilesService{
      * @param {string} referenceNumber 
      */
      static async FindStockFile(referenceNumber){
-        // ----- Temporary filter -----
-        const allowRefNumbers = {
-            '177903': true,
-            '264903': true,
-            '270903': true,
-            '274903': true,
-            '276903': true,
-        }
-        const isAllowed = allowRefNumbers[referenceNumber.substring(0, 6)]
-        if(!isAllowed) return null
-        // ----------------------------
-        
         const folders = await FoldersCollection.find().toArray()
         let folderName = null
         const collName = referenceNumber.replace(/\ /g, '_')
         for(let i = 0; i < folders.length; i++){
             const n = folders[i].name
-            if(n.length >= 30 && n.endsWith(collName)){
+            if(n.length >= 10 && n.endsWith(collName)){
                 folderName = n
                 break
             }
@@ -76,8 +66,12 @@ class TunesFilesService{
 
     /**
      * @param {string} referenceNumber 
+     * @param {string} shopId 
      */
-    static async GetShopStockFile(referenceNumber){
+    static async GetShopStockFile(referenceNumber, shopId){
+        if(! await this.IsReferenceNumberAllowed(referenceNumber, shopId)){
+            return // Ref number is not allowed globally or for current shop
+        }
         const fileStream = await this.GetRawStockFile(referenceNumber)
         if(fileStream === null) return null
         return await this.UnpackShopFile(referenceNumber, fileStream)
@@ -115,6 +109,29 @@ class TunesFilesService{
         }else{
             return shopInputStream
         }
+    }
+
+    /**
+     * @public
+     * @param {string} referenceNumber 
+     * @param {Record<string, any>} filters 
+     */
+    static async IsReferenceNumberAllowed(referenceNumber, shopId){
+        const shopData = await coll('comport', 'shops').findOne({ _id: ObjectId(shopId) })
+        // ---------- filter ----------
+        const globalFilters = AllowRefNumbers
+        const userFilters = shopData.allowed_reference_numbers || []
+        const search = referenceNumber.substring(0, 6)
+        if(globalFilters){
+            const exists = globalFilters.includes(search)
+            if(!exists) return false
+        }
+        if(userFilters){
+            const exists = userFilters.includes(search)
+            if(!exists) return false
+        }
+        // ----------------------------
+        return true
     }
 
 }

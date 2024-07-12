@@ -134,6 +134,12 @@ module.exports.findStockFile = async (req, res) => {
         return
     }
     
+    if(! await TunesFilesService.IsReferenceNumberAllowed(calibrationNumber, req.user._id)){
+        res.send({
+            stockFile: null
+        })
+        return
+    }
     const tuneFile = await TunesFilesService.FindStockFile(calibrationNumber)
     if(tuneFile){
         tuneFile.downloadTicket = TuneFileProtectionService.createDownloadTicket(
@@ -153,7 +159,7 @@ module.exports.getStockFile = async (req, res) => {
         return
     }
     
-    const readStream = await TunesFilesService.GetShopStockFile(calibrationNumber)
+    const readStream = await TunesFilesService.GetShopStockFile(calibrationNumber, req.user._id)
     if(readStream !== null){
         readStream.pipe(res)
         return
@@ -172,7 +178,7 @@ module.exports.getStockFileByCustomer = (req, res) => {
         ),
         async () => {
             const stockFileRefNum = await FindStockFileReference(customerEmail, customerVin, fileType)
-            const readStream = await TunesFilesService.GetShopStockFile(stockFileRefNum)
+            const readStream = await TunesFilesService.GetShopStockFile(stockFileRefNum, req.user._id)
             if(readStream){
                 readStream.on('end', () => res.end())
                 readStream.pipe(res)
