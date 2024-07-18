@@ -148,6 +148,7 @@ module.exports = class ExternalProgramsService{
     }
 
     static async SecAlgo_GenericDLL(dllName, seed, secLevel){
+        if(!dllName.endsWith('.dll')) dllName = dllName + '.dll'
         const dllFilename = path.join(this._progFile('keygen_dlls'), dllName)
         const cmd = `wine "${this._progFile(`Comport_SeedKeyDLL_Client.exe`)}" "${dllFilename}" ${SanitizeHexSerie(seed)} ${SanitizeNumber(secLevel) || ''}`
         return await exec(cmd)
