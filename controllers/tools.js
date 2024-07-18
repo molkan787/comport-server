@@ -43,6 +43,7 @@ module.exports = class ToolsController{
         'EZS167_18_13_01_20182626032-generatekey': this.t_GenericSecAlgo_GenerateKey,
         'EZS167_18_19_59_20181830011-generatekey': this.t_GenericSecAlgo_GenerateKey,
         'MG1CS002_AT_PatchBlocksData': this.t_MG1CS002_AT_PatchBlocksData,
+        "dll-generatekey": this.t_GenericSecAlgoDLL_GenerateKey,
     }
 
     static async handleRequest(req, res){
@@ -266,6 +267,18 @@ module.exports = class ToolsController{
         const jarFilename = req.params.tool.split('-')[0]
         const key = await SecurityAlgorithmsService.GenericSecAlgoJarExec({
             jarFilename: `SecAlgo_${jarFilename}`,
+            seed: seed,
+            secLevel: securityAccessLevel
+        })
+        return {
+            GeneratedKey: key.toString('hex')
+        }
+    }
+    
+    static async t_GenericSecAlgoDLL_GenerateKey(req, res){
+        const { dllName, seed, securityAccessLevel } = req.query
+        const key = await SecurityAlgorithmsService.GenericSecAlgoDLLExec({
+            dllName: dllName,
             seed: seed,
             secLevel: securityAccessLevel
         })

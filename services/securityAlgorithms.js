@@ -220,6 +220,18 @@ module.exports = class SecurityAlgorithmsService{
         return Buffer.from(keyHexStr, 'hex')
     }
 
+    
+    static async GenericSecAlgoDLLExec({ dllName, seed, secLevel }){
+        if(Buffer.isBuffer(seed))
+            seed = seed.toString('hex')
+        if(seed.length != 4 && seed.length != 8 && seed.length != 16)
+            throw new InvalidInputError('Invalid seed length')
+
+        const output = await ExternalProgramsService.SecAlgo_GenericDLL(dllName, seed, secLevel)
+        const keyHexStr = this._grabOutputData(output)
+        return Buffer.from(keyHexStr, 'hex')
+    }
+
     // ------------------------------------------------------------------
 
     /**
