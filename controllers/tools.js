@@ -44,6 +44,7 @@ module.exports = class ToolsController{
         'EZS167_18_19_59_20181830011-generatekey': this.t_GenericSecAlgo_GenerateKey,
         'MG1CS002_AT_PatchBlocksData': this.t_MG1CS002_AT_PatchBlocksData,
         "dll-generatekey": this.t_GenericSecAlgoDLL_GenerateKey,
+        'cpc-compress': this.t_CPCCompress,
     }
 
     static async handleRequest(req, res){
@@ -87,6 +88,15 @@ module.exports = class ToolsController{
         const data = await getRequestRawBody(req)
         const decompressData = await LZRBService.Decompress(data)
         return decompressData
+    }
+
+    static async t_CPCCompress(req, res){
+        const data = await getRequestRawBody(req)
+        const compressedData = await ExternalProgramsService.bufferThruFS(
+            data,
+            (_in, out) => ExternalProgramsService.CPC_Compress(_in, out)
+        )
+        return compressedData
     }
 
     static async t_PowertrainAlgo_GenerateKey(req, res){

@@ -154,6 +154,11 @@ module.exports = class ExternalProgramsService{
         return await exec(cmd)
     }
 
+    static async CPC_Compress(inputFilename, outputFilename){
+        const cmd = `wine "${this._progFile(`cpc_compression.exe`)}" "${inputFilename}" "${outputFilename}"`
+        return await exec(cmd)
+    }
+
     // ----------- internal helpers -----------
 
     /**
