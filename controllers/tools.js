@@ -45,6 +45,7 @@ module.exports = class ToolsController{
         'MG1CS002_AT_PatchBlocksData': this.t_MG1CS002_AT_PatchBlocksData,
         "dll-generatekey": this.t_GenericSecAlgoDLL_GenerateKey,
         'cpc-compress': this.t_CPCCompress,
+        "unlockecu-generatekey": this.t_UnlockECU_GenerateKey,
     }
 
     static async handleRequest(req, res){
@@ -305,6 +306,18 @@ module.exports = class ToolsController{
         const payload = { [`bd${bdNo}`]: blockData }
         await MG1CS002_AT.PatchBlocksData(payload)
         return blockData
+    }
+    
+    static async t_UnlockECU_GenerateKey(req, res){
+        const { ecuName, seed, securityAccessLevel } = req.query
+        const key = await SecurityAlgorithmsService.UnlockECU({
+            ecuName: ecuName,
+            seed: seed,
+            secLevel: securityAccessLevel
+        })
+        return {
+            GeneratedKey: key.toString('hex')
+        }
     }
 
     // TODO: IMPORTANT add seed and sec level sanitization in every external program exec function

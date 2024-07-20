@@ -232,6 +232,18 @@ module.exports = class SecurityAlgorithmsService{
         return Buffer.from(keyHexStr, 'hex')
     }
 
+    static async UnlockECU({ ecuName, seed, secLevel }){
+        if(Buffer.isBuffer(seed))
+            seed = seed.toString('hex')
+        if(seed.length < 2 || seed.length > 32)
+            throw new InvalidInputError('Invalid seed length')
+
+        const output = await ExternalProgramsService.UnlockECU_nf(ecuName, seed, secLevel)
+        console.log(output)
+        const keyHexStr = this._grabOutputData(output)
+        return Buffer.from(keyHexStr, 'hex')
+    }
+
     // ------------------------------------------------------------------
 
     /**

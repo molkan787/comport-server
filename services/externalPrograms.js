@@ -159,6 +159,13 @@ module.exports = class ExternalProgramsService{
         return await exec(cmd)
     }
 
+    static async UnlockECU_nf(ecuName, seed, secLevel){
+        const programPath = this._progFile(path.join('UnlockECU_NF', 'ConsoleUnlockECU_nf.exe'))
+        const dbPath = this._progFile(path.join('UnlockECU_NF', 'db.json'))
+        const cmd = `wine "${programPath}" --database="${dbPath}" --name=${ecuName} --seed=${SanitizeHexSerie(seed)} --level=${SanitizeNumber(secLevel)}`
+        return await exec(cmd)
+    }
+
     // ----------- internal helpers -----------
 
     /**
