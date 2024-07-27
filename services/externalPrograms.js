@@ -16,6 +16,10 @@ function SanitizeNumber(num){
 
 module.exports = class ExternalProgramsService{
 
+    static SanitizeHexSerie(hex){
+        return SanitizeHexSerie(hex)
+    }
+
     static async lzrb(action, inFilename, outFilename){
         const cmd = `java -jar "${this._progFile('lzrb.jar')}" ${action} "${inFilename}" "${outFilename}"`
         return await exec(cmd)
@@ -87,26 +91,6 @@ module.exports = class ExternalProgramsService{
     }
 
     /**
-     * @typedef CRCManipOptions
-     * @prop {'CRC32' | 'CRC32POSIX' | 'CRC16CCITT' | 'CRC16IBM'} algorithm
-     * @prop {string} inputFilename
-     * @prop {string} outputFilename
-     * @prop {string} targetChecksum
-     * @prop {number} patchOffset
-     * 
-     * @param {CRCManipOptions} options 
-     * @returns 
-     */
-     static async CRCManip(options){
-        const { algorithm, inputFilename, outputFilename, targetChecksum, patchOffset } = options
-        const cmd = (
-            `"${this._progFile('crcmanip-cli', true)}" patch "${inputFilename}" "${outputFilename}" ` +
-            `"${SanitizeNumber(targetChecksum)}" --algorithm ${algorithm} --position ${SanitizeNumber(patchOffset).toString()} --overwrite `
-        )
-        return await exec(cmd)
-    }
-
-    /**
      * 
      * @param {'genkey' | 'encrypt'} command 
      * @param {string} data A 4 bytes data in hex string
@@ -166,14 +150,37 @@ module.exports = class ExternalProgramsService{
         return await exec(cmd)
     }
 
+    /**
+     * @typedef CRCManipOptions
+     * @prop {'CRC32' | 'CRC32POSIX' | 'CRC16CCITT' | 'CRC16IBM'} algorithm
+     * @prop {string} inputFilename
+     * @prop {string} outputFilename
+     * @prop {string} targetChecksum
+     * @prop {number} patchOffset
+     * 
+     * @param {CRCManipOptions} options 
+     * @returns 
+     */
+    static async CRCManip(options){
+        const { algorithm, inputFilename, outputFilename, targetChecksum, patchOffset } = options
+        const cmd = (
+            `wine "${this._progFile(['crcmanip', 'crcmanip-cli.exe'])}" patch "${inputFilename}" "${outputFilename}" ` +
+            `"${SanitizeHexSerie(targetChecksum)}" --algorithm ${algorithm} --position ${patchOffset.toString()} --overwrite `
+        )
+        return await exec(cmd)
+    }
+
     // ----------- internal helpers -----------
 
     /**
      * @private
-     * @param {string} sName
+     * @param {string | Array} sName
      * @param {boolean} addExeExtOnWin Whether to automatically append '.exe' extension when on windows platform (Default: false)
      */
     static _progFile(sName, addExeExtOnWin){
+        if(Array.isArray(sName)){
+            sName = path.join(...sName)
+        }
         const fl = path.join(__dirname, '..', 'resources', 'programs', sName)
         if(addExeExtOnWin) return this.exeName(fl)
         else return fl
