@@ -58,6 +58,7 @@ async function packTheApp(){
  */
 async function unpackTheApp(sshClient, remoteAppFile){
     const iee = '> /dev/null; true';
+    const appName = path.basename(AppDir)
     const cmds = [
         `rm -rf '${unixPathJoin(UploadDir, 'tmp_public')}'`,
         `rm -rf '${unixPathJoin(UploadDir, 'tmp_node_modules')}'`,
@@ -74,8 +75,8 @@ async function unpackTheApp(sshClient, remoteAppFile){
         `mkdir '${unixPathJoin(AppDir, 'public')}' ${iee}`, // try to create the dir in case we did not have an existing one
         `mv '${unixPathJoin(UploadDir, 'tmp_node_modules')}' '${unixPathJoin(AppDir, 'node_modules')}' ${iee}`,
         'yarn --production',
-        `pm2 stop '${AppDir}'`,
-        `pm2 start '${AppDir}'`
+        `pm2 stop '${appName}'`,
+        `pm2 start '${appName}'`
     ]
     for(let cmd of cmds){
         const response = await sshClient.execCommand(cmd, { cwd: AppDir })
