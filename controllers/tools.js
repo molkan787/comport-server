@@ -9,6 +9,7 @@ const CRCManipTool = require('../services/tools/CRCManipTool')
 const { MG1CryptoTool } = require('../services/tools/MG1CryptoTool')
 const { IsValidString } = require('../jsutils')
 const { MG1CS002_AT } = require('../services/tools/MG1CS002_AT')
+const { AuthenticateCustomerFromQuery } = require('../services/customers')
 
 module.exports = class ToolsController{
 
@@ -49,6 +50,12 @@ module.exports = class ToolsController{
     }
 
     static async handleRequest(req, res){
+        
+        const customerAuthenticated = await AuthenticateCustomerFromQuery(req, res)
+        if(!customerAuthenticated){
+            return
+        }
+
         try {
             const tool = this.Tools[req.params.tool]
             if(typeof tool != 'function'){
