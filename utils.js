@@ -1,4 +1,4 @@
-const { exec: nativeExec } = require('child_process')
+const { exec: nativeExec, spawn: nativeSpawn } = require('child_process')
 const fs = require('fs')
 
 /**
@@ -25,7 +25,6 @@ function numOrDefault(num, defaultValue){
 }
 
 /**
- * 
  * @param {string} cmd 
  * @returns {Promise<string>}
  */
@@ -34,6 +33,25 @@ function exec(cmd){
         if(error) reject(error)
         else resolve(stdout)
     }))
+}
+
+/**
+ * @param {string} cmd 
+ * @param {string[]} args 
+ * @param {import('child_process').SpawnOptionsWithoutStdio} options 
+ * @param {(string, string) => void} outputHandler
+ * @returns {Promise<void>}
+ */
+function spawn(cmd, args, options, outputHandler){
+    return new Promise((resolve, reject) => {
+        const process = nativeSpawn(cmd, args || [], options)
+        process.stdout.on('data', data => outputHandler(data.toString('utf8'), null))
+        process.stderr.on('data', data => outputHandler(null, data.toString('utf8')))
+        process.addListener('close', (code) => {
+            if(code === 0) resolve()
+            else reject(code)
+        })
+    })
 }
 
 /**
@@ -181,5 +199,6 @@ module.exports = {
     toHex,
     getAscii,
     Hex,
-    rmDir
+    rmDir,
+    spawn,
 }

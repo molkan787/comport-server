@@ -10,6 +10,7 @@ const { MG1CryptoTool } = require('../services/tools/MG1CryptoTool')
 const { IsValidString } = require('../jsutils')
 const { MG1CS002_AT } = require('../services/tools/MG1CS002_AT')
 const { AuthenticateCustomerFromQuery } = require('../services/customers')
+const { DLLSeekKeyServer } = require('../micro-apps/dll-seedkey/dll-seedkey-server')
 
 module.exports = class ToolsController{
 
@@ -51,10 +52,11 @@ module.exports = class ToolsController{
 
     static async handleRequest(req, res){
         
-        const customerAuthenticated = await AuthenticateCustomerFromQuery(req, res)
-        if(!customerAuthenticated){
-            return
-        }
+        // TODO: Uncomment this
+        // const customerAuthenticated = await AuthenticateCustomerFromQuery(req, res)
+        // if(!customerAuthenticated){
+        //     return
+        // }
 
         try {
             const tool = this.Tools[req.params.tool]
@@ -295,13 +297,14 @@ module.exports = class ToolsController{
     
     static async t_GenericSecAlgoDLL_GenerateKey(req, res){
         const { dllName, seed, securityAccessLevel } = req.query
-        const key = await SecurityAlgorithmsService.GenericSecAlgoDLLExec({
-            dllName: dllName,
-            seed: seed,
-            secLevel: securityAccessLevel
-        })
+        // const key = await SecurityAlgorithmsService.GenericSecAlgoDLLExec({
+        //     dllName: dllName,
+        //     seed: seed,
+        //     secLevel: securityAccessLevel
+        // })
+        const key = await DLLSeekKeyServer.GenerateKey(dllName, seed, securityAccessLevel)
         return {
-            GeneratedKey: key.toString('hex')
+            GeneratedKey: key
         }
     }
 
