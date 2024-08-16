@@ -11,12 +11,22 @@ const { mountHelpers, mountRoutes } = require('./routes')
 const app = express()
 
 const IsProd = fs.existsSync(path.join(__dirname, '.prod'))
-const port = IsProd ? 8085 : 9085
-const httpsPort = IsProd ? 8086 : 9086
+const DEV = !IsProd
+
+const UseHTTPS = !DEV
+const _PortBase = IsProd ? 8000 : 9000
+const port = _PortBase + 85
+const httpsPort = _PortBase + 86
+
+const _PortsConfig = {
+  _PortBase: _PortBase,
+  httpPort: port,
+  httpsPort: httpsPort,
+}
 
 global.httpConfig = {
-  httpPort: port,
-  httpsPort: httpsPort
+  ..._PortsConfig,
+  _PortsConfig,
 }
 
 const binaryBodyParser = require('./middlewares/binaryBodyParser')
@@ -25,8 +35,6 @@ const { coll, client } = require('./db')
 const { MicroApps } = require('./micro-apps')
 const { TLSCertThumbprintServerService } = require('./services/security/tls-cert-thumbprint-server')
 
-const DEV = process.platform === 'win32'
-const UseHTTPS = !DEV
 
 let server = http.createServer()
 let httpsServer = null
@@ -101,5 +109,6 @@ MicroApps.InitAll({
   app: app,
   server: serverForApps,
   socketIO: io,
-  db: { client: client, coll: coll }
+  db: { client: client, coll: coll },
+  _PortsConfig,
 })

@@ -10,5 +10,10 @@ export interface AppInitOptions {
     db: {
         client: MongoClient,
         coll: (dbName: string, collectionName: string) => Collection<Document>
-    }
+    },
+    _PortsConfig: {
+        _PortBase: number,
+        httpPort: number,
+        httpsPort: number,
+    },
 }
