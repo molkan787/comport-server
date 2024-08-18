@@ -2,7 +2,7 @@ const RemoteOBDSniffer = require('./micro-apps/remote-obd-sniffer')
 const ComportDebug = require('./micro-apps/comport-debug')
 const ShopsApp = require('./micro-apps/shops')
 const DLLSeekKeyServer = require('./micro-apps/dll-seedkey')
-const CPCCompressionServer = require('./micro-apps/cpc-compression')
+// const CPCCompressionServer = require('./micro-apps/cpc-compression')
 
 class MicroApps{
 
