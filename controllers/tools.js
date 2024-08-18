@@ -11,6 +11,7 @@ const { IsValidString } = require('../jsutils')
 const { MG1CS002_AT } = require('../services/tools/MG1CS002_AT')
 const { AuthenticateCustomerFromQuery } = require('../services/customers')
 const { DLLSeekKeyServer } = require('../micro-apps/dll-seedkey/dll-seedkey-server')
+const { CPCCompressionServer } = require('../micro-apps/cpc-compression/cpc-compression-server')
 
 module.exports = class ToolsController{
 
@@ -104,7 +105,7 @@ module.exports = class ToolsController{
         const data = await getRequestRawBody(req)
         const compressedData = await ExternalProgramsService.bufferThruFS(
             data,
-            (_in, out) => ExternalProgramsService.CPC_Compress(_in, out)
+            (_in, out) => CPCCompressionServer.CompressFile(_in, out)
         )
         return compressedData
     }
