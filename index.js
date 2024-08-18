@@ -13,7 +13,7 @@ const app = express()
 const IsProd = fs.existsSync(path.join(__dirname, '.prod'))
 const DEV = !IsProd
 
-const UseHTTPS = !DEV
+const UseHTTPS = fs.existsSync(path.join(__dirname, '../data/cert.pem'))
 const _PortBase = IsProd ? 8000 : 9000
 const port = _PortBase + 85
 const httpsPort = _PortBase + 86
