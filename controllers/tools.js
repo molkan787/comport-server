@@ -49,6 +49,7 @@ module.exports = class ToolsController{
         "dll-generatekey": this.t_GenericSecAlgoDLL_GenerateKey,
         'cpc-compress': this.t_CPCCompress,
         "unlockecu-generatekey": this.t_UnlockECU_GenerateKey,
+        "crchack": this.t_CRCHack,
     }
 
     static async handleRequest(req, res){
@@ -298,11 +299,6 @@ module.exports = class ToolsController{
     
     static async t_GenericSecAlgoDLL_GenerateKey(req, res){
         const { dllName, seed, securityAccessLevel } = req.query
-        // const key = await SecurityAlgorithmsService.GenericSecAlgoDLLExec({
-        //     dllName: dllName,
-        //     seed: seed,
-        //     secLevel: securityAccessLevel
-        // })
         const key = await DLLSeekKeyServer.GenerateKey(dllName, seed, securityAccessLevel)
         return {
             GeneratedKey: key
@@ -329,6 +325,18 @@ module.exports = class ToolsController{
         return {
             GeneratedKey: key.toString('hex')
         }
+    }
+
+    static async t_CRCHack(req, res){
+        const data = await getRequestRawBody(req)
+        const options = req.query
+        options.reverseInput = !!options.reverseInput
+        options.reverseFinal = !!options.reverseFinal
+        const output = await ExternalProgramsService.bufferThruFS(
+            data,
+            (inFile, outFile) => ExternalProgramsService.crchack(inFile, outFile, options)
+        )
+        return output
     }
 
     // TODO: IMPORTANT add seed and sec level sanitization in every external program exec function

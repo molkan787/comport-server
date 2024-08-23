@@ -14,6 +14,13 @@ function SanitizeNumber(num){
     return parseInt(num.toString(), 10).toString(10)
 }
 
+function SanitizeFilePath(path){
+    if(path.includes('"')){
+        throw new Error('File path cannot includes double quotes.')
+    }
+    return `"${path}"`
+}
+
 module.exports = class ExternalProgramsService{
 
     static SanitizeHexSerie(hex){
@@ -167,6 +174,49 @@ module.exports = class ExternalProgramsService{
             `wine "${this._progFile(['crcmanip', 'crcmanip-cli.exe'])}" patch "${inputFilename}" "${outputFilename}" ` +
             `"${SanitizeHexSerie(targetChecksum)}" --algorithm ${algorithm} --position ${patchOffset.toString()} --overwrite `
         )
+        return await exec(cmd)
+    }
+
+    /**
+     * @typedef CRCHachOptions
+     * @prop {string} targetChecksum
+     * @prop {string?} position byte.bit position of mutable input bits
+     * @prop {string?} backwardPosition position offset from the end of the input
+     * @prop {string?} bits specify bits at positions l..r with step s
+     * @prop {string?} polynomial generator polynomial
+     * @prop {string?} initialRegister initial register value
+     * @prop {boolean?} reverseInput reverse input bytes
+     * @prop {string?} registerSize register size in bits
+     * @prop {string?} xorMask final register XOR mask
+     * @prop {boolean?} reverseFinal reverse final register
+     * 
+     * @param {string} inputFilename
+     * @param {string} outputFilename
+     * @param {CRCHachOptions} options 
+     */
+    static async crchack(inputFilename, outputFilename, options){
+        const { targetChecksum, position, backwardPosition, bits, polynomial, initialRegister,
+            reverseInput, registerSize, xorMask, reverseFinal } = options
+        const opts = []
+        if(position) opts.push('-o', position)
+        if(backwardPosition) opts.push('-O', backwardPosition)
+        if(bits) opts.push('-b', bits)
+        if(polynomial) opts.push('-p', polynomial)
+        if(initialRegister) opts.push('-i', initialRegister)
+        if(reverseInput) opts.push('-r')
+        if(registerSize) opts.push('-w', registerSize)
+        if(xorMask) opts.push('-x', xorMask)
+        if(reverseFinal) opts.push('-R')
+        const cmd = [
+            "wine",
+            `"${this._progFile('crchack.exe')}"`,
+            opts.join(' '),
+            SanitizeFilePath(inputFilename),
+            SanitizeHexSerie(targetChecksum),
+            '>',
+            SanitizeFilePath(outputFilename),
+        ].join(' ')
+        console.log('cmd:', cmd)
         return await exec(cmd)
     }
 

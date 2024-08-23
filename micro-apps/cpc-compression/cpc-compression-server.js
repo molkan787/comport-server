@@ -41,7 +41,7 @@ class CPCCompressionServer{
                         .forEach(ln => console.log('[CPCCompressionServer][STDOUT] ' + ln))
                     }else if(stderr){
                         stderr.split('\n')
-                        .filter(ln => !!ln)
+                        .filter(ln => !!ln && !ln.includes(':fixme:'))
                         .forEach(ln => console.log('[CPCCompressionServer][STDERR] ' + ln))
                     }
                 })

@@ -36,7 +36,7 @@ class DLLSeekKeyServer{
                         .forEach(ln => console.log('[DLLSeekKeyServer][STDOUT] ' + ln))
                     }else if(stderr){
                         stderr.split('\n')
-                        .filter(ln => !!ln)
+                        .filter(ln => !!ln && !ln.includes(':fixme:'))
                         .forEach(ln => console.log('[DLLSeekKeyServer][STDERR] ' + ln))
                     }
                 })
