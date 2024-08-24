@@ -208,8 +208,7 @@ module.exports = class ExternalProgramsService{
         if(xorMask) opts.push('-x', xorMask)
         if(reverseFinal) opts.push('-R')
         const cmd = [
-            "wine",
-            `"${this._progFile('crchack.exe')}"`,
+            `"${this._progFile('crchack')}"`,
             opts.join(' '),
             SanitizeFilePath(inputFilename),
             SanitizeHexSerie(targetChecksum),
