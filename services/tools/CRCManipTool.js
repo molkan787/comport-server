@@ -12,19 +12,21 @@ module.exports = class CRCManipTool{
      * @prop {Buffer} data
      * @prop {string} targetChecksum
      * @prop {number} patchOffset
+     * @prop {string?} polynomial
      * 
      * @param {FixOptions} options 
      * @returns 
      */
     static async FixChecksum(options){
-        const { algorithm, data, targetChecksum, patchOffset } = options
+        const { algorithm, data, targetChecksum, patchOffset, polynomial } = options
         return await ExternalProgramsService.bufferThruFS(data,
             (inFile, outFile) => ExternalProgramsService.CRCManip({
                 algorithm: algorithm,
                 inputFilename: inFile,
                 outputFilename: outFile,
                 targetChecksum: targetChecksum,
-                patchOffset: patchOffset
+                patchOffset: patchOffset,
+                polynomial: polynomial,
             })    
         )
     }

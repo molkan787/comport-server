@@ -149,6 +149,10 @@ function stringIsNullOrEmpty(value){
     return typeof value != 'string' || value.length === 0
 }
 
+function isNoneEmptyString(value){
+    return typeof value === 'string' && value.trim().length > 0
+}
+
 /**
  * 
  * @param {number[] | Buffer} data 
@@ -201,4 +205,5 @@ module.exports = {
     Hex,
     rmDir,
     spawn,
+    isNoneEmptyString,
 }

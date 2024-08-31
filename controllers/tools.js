@@ -204,7 +204,7 @@ module.exports = class ToolsController{
     }
 
     static async t_CRCManip(req, res){
-        const { algorithm, targetChecksum, patchOffset } = req.query
+        const { algorithm, targetChecksum, patchOffset, polynomial } = req.query
         if(!CRCManipTool.SupportedAlgorithms.includes(algorithm)){
             throw new InvalidInputError(`Algorithm '${algorithm}' is not supported`)
         }
@@ -212,6 +212,7 @@ module.exports = class ToolsController{
             algorithm: algorithm,
             targetChecksum: targetChecksum,
             patchOffset: parseInt(patchOffset),
+            polynomial: polynomial,
             data: req.body
         })
         return output
