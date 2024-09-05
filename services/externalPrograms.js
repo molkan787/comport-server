@@ -159,9 +159,10 @@ module.exports = class ExternalProgramsService{
 
     /**
      * @typedef CRCManipOptions
+     * @prop {'calculate' | 'patch' | 'computePatch' | undefined} command
      * @prop {'CRC32' | 'CRC32POSIX' | 'CRC16CCITT' | 'CRC16IBM'} algorithm
      * @prop {string} inputFilename
-     * @prop {string} outputFilename
+     * @prop {string?} outputFilename
      * @prop {string} targetChecksum
      * @prop {number} patchOffset
      * @prop {string?} polynomial
@@ -170,12 +171,26 @@ module.exports = class ExternalProgramsService{
      * @returns 
      */
     static async CRCManip(options){
-        const { algorithm, inputFilename, outputFilename, targetChecksum, patchOffset, polynomial } = options
-        const cmd = (
-            `wine "${this._progFile(['crcmanip', 'crcmanip-cli.exe'])}" patch "${inputFilename}" "${outputFilename}" ` +
-            `"${SanitizeHexSerie(targetChecksum)}" --algorithm ${algorithm} --position ${patchOffset.toString()} --overwrite ` +
-            (isNoneEmptyString(polynomial) ? `--polynomial ${SanitizeHexNumber(polynomial.trim())}` : '')
-        )
+        const { command, algorithm, inputFilename, outputFilename, targetChecksum, patchOffset, polynomial } = options
+        const _command = command || 'patch'
+        if(!['calculate', 'patch', 'computePatch'].includes(_command)){
+            throw new Error(`Unknow command "${_command}".`);
+        }
+        if(!['CRC32', 'CRC32POSIX', 'CRC16CCITT', 'CRC16IBM'].includes(algorithm)){
+            throw new Error(`Unknow algorithm "${algorithm}".`);
+        }
+        const cmd = [
+            'wine',
+            `"${this._progFile(['crcmanip', 'crcmanip-cli.exe'])}"`,
+            _command,
+            `"${inputFilename}"`,
+            (outputFilename ? `"${outputFilename}"` : ''),
+            `"${SanitizeHexSerie(targetChecksum)}"`,
+            `--algorithm ${algorithm}`,
+            `--position ${patchOffset.toString()}`,
+            `--overwrite`,
+            (isNoneEmptyString(polynomial) ? `--polynomial ${SanitizeHexNumber(polynomial.trim())}` : ''),
+        ].filter(s => !!s).join(' ') // filter out empty items and join remaining with space
         console.log(cmd)
         return await exec(cmd)
     }
@@ -300,6 +315,14 @@ module.exports = class ExternalProgramsService{
             deleteFile(outFilename)
         ])
         return outputBuffer
+    }
+
+    static async bufferThruFSInOnly(buffer, runner){
+        const inFilename = temp.path()
+        await writeFile(inFilename, buffer)
+        const output = await runner(inFilename)
+        await deleteFile(inFilename)
+        return output
     }
 
 }

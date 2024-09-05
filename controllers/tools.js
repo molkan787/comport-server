@@ -204,18 +204,31 @@ module.exports = class ToolsController{
     }
 
     static async t_CRCManip(req, res){
-        const { algorithm, targetChecksum, patchOffset, polynomial } = req.query
+        const { algorithm, targetChecksum, patchOffset, polynomial, computeOnly } = req.query
         if(!CRCManipTool.SupportedAlgorithms.includes(algorithm)){
             throw new InvalidInputError(`Algorithm '${algorithm}' is not supported`)
         }
-        const output = await CRCManipTool.FixChecksum({
-            algorithm: algorithm,
-            targetChecksum: targetChecksum,
-            patchOffset: parseInt(patchOffset),
-            polynomial: polynomial,
-            data: req.body
-        })
-        return output
+        if(computeOnly === 'true' || computeOnly === '1'){
+            const output = await CRCManipTool.ComputePatch({
+                algorithm: algorithm,
+                targetChecksum: targetChecksum,
+                patchOffset: parseInt(patchOffset),
+                polynomial: polynomial,
+                data: req.body
+            })
+            return {
+                patch: output
+            }
+        }else{
+            const output = await CRCManipTool.FixChecksum({
+                algorithm: algorithm,
+                targetChecksum: targetChecksum,
+                patchOffset: parseInt(patchOffset),
+                polynomial: polynomial,
+                data: req.body
+            })
+            return output
+        }
     }
     
     static async t_Subaru_GenerateKey(req, res){
