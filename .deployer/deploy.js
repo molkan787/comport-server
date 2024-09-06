@@ -74,6 +74,7 @@ async function unpackTheApp(sshClient, remoteAppFile){
         `mv '${unixPathJoin(UploadDir, 'tmp_public')}' '${unixPathJoin(AppDir, 'public')}' ${iee}`,
         `mkdir '${unixPathJoin(AppDir, 'public')}' ${iee}`, // try to create the dir in case we did not have an existing one
         `mv '${unixPathJoin(UploadDir, 'tmp_node_modules')}' '${unixPathJoin(AppDir, 'node_modules')}' ${iee}`,
+        `chmod +x '${unixPathJoin(AppDir, 'resources/programs/crchack')}'`,
         'yarn --production',
         `pm2 stop '${appName}'`,
         `pm2 start '${appName}'`
