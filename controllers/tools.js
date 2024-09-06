@@ -12,6 +12,8 @@ const { MG1CS002_AT } = require('../services/tools/MG1CS002_AT')
 const { AuthenticateCustomerFromQuery } = require('../services/customers')
 const { DLLSeekKeyServer } = require('../micro-apps/dll-seedkey/dll-seedkey-server')
 const { CPCCompressionServer } = require('../micro-apps/cpc-compression/cpc-compression-server')
+const { ByteReturnService } = require('../services/tools/bytereturn')
+const { Stream } = require('memorystream')
 
 module.exports = class ToolsController{
 
@@ -50,6 +52,7 @@ module.exports = class ToolsController{
         'cpc-compress': this.t_CPCCompress,
         "unlockecu-generatekey": this.t_UnlockECU_GenerateKey,
         "crchack": this.t_CRCHack,
+        "byte-return": this.t_ByteReturn,
     }
 
     static async handleRequest(req, res){
@@ -73,6 +76,9 @@ module.exports = class ToolsController{
                     res.setHeader('content-type', 'application/octet-stream')
                     res.setHeader('content-length', response.length)
                     res.send(response)
+                }else if(response && typeof response.pipe === 'function'){
+                    res.setHeader('content-type', 'application/octet-stream')
+                    response.pipe(res)
                 }else{
                     res.send(response)
                 }
@@ -351,6 +357,11 @@ module.exports = class ToolsController{
             (inFile, outFile) => ExternalProgramsService.crchack(inFile, outFile, options)
         )
         return output
+    }
+
+    static async t_ByteReturn(req, res){
+        const readStream = await ByteReturnService.getBytes('985000360850200200200', '0200200200 stock.bin', 32, 16)
+        return readStream
     }
 
     // TODO: IMPORTANT add seed and sec level sanitization in every external program exec function
