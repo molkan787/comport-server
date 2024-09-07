@@ -1,6 +1,6 @@
 const metadata = require('../db').coll('metadata', 'app-info')
 
-module.exports = async (req, res) => {
+async function getUpdateInformation (req, res) {
     const { httpsPort } = global.httpConfig
     const appName = req.query.app || 'flasher';
     const appInfo = await metadata.findOne({ app: appName })
@@ -14,4 +14,17 @@ module.exports = async (req, res) => {
     ${mandatory ? `<mandatory mode="${mandatory}">true</mandatory>` : ''}
 </item>`
     );
+}
+
+async function getLatestAppVersion(req, res){
+    const appName = req.query.app || 'flasher';
+    const appInfo = await metadata.findOne({ app: appName })
+    const { version } = appInfo || {};
+    res.set('Content-Type', 'text/plain')
+    res.send(version || '')
+}
+
+module.exports = {
+    getUpdateInformation,
+    getLatestAppVersion,
 }

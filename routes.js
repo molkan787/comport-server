@@ -84,7 +84,8 @@ function mountRoutes(app){
     app.get('/prv/shop/webapp/initial-data', shop.getShopWebAppInitialData)
     app.get('/prv/shop/webapp/shop-credit', shop.getShopCredit)
 
-    app.get('/pub/app-updates', appupdates)
+    app.get('/pub/app-updates', appupdates.getUpdateInformation)
+    app.get('/pub/app-info/latest-app-version', appupdates.getLatestAppVersion)
 
     app.get('/pub/flashes/:software_number/:email/:vin', flashes.listFlashes)
     app.get('/pub/flashes/:email/:vin', flashes.listFlashes)
