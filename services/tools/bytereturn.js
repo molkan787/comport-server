@@ -4,6 +4,13 @@ const { slice } = require('stream-slice')
 
 class ByteReturnService{
 
+    /**
+     * @param {string} filesDbName 
+     * @param {string} fileName 
+     * @param {number} offset 
+     * @param {number} length 
+     * @returns {ReadableStream | null}
+     */
     static async getBytes(filesDbName, fileName, offset, length){
         const readStream = await this._findFile(filesDbName, fileName)
         if(readStream){

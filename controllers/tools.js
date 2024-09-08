@@ -14,6 +14,7 @@ const { DLLSeekKeyServer } = require('../micro-apps/dll-seedkey/dll-seedkey-serv
 const { CPCCompressionServer } = require('../micro-apps/cpc-compression/cpc-compression-server')
 const { ByteReturnService } = require('../services/tools/bytereturn')
 const { Stream } = require('memorystream')
+const { parseIntNumber } = require('../helpers/data-helpers')
 
 module.exports = class ToolsController{
 
@@ -360,7 +361,10 @@ module.exports = class ToolsController{
     }
 
     static async t_ByteReturn(req, res){
-        const readStream = await ByteReturnService.getBytes('985000360850200200200', '0200200200 stock.bin', 32, 16)
+        const { folderName, fileName, offset, length } = req.query
+        const nOffset = parseIntNumber(offset)
+        const nLength = parseIntNumber(length)
+        const readStream = await ByteReturnService.getBytes(folderName, fileName, nOffset, nLength)
         return readStream
     }
 
