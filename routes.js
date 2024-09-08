@@ -28,6 +28,7 @@ const FlashDataPackerControllers = require('./controllers/flash-data-packer');
 const { GetTLSCertThumbprint } = require('./controllers/security');
 const customerWebhooks = require('./controllers/webhooks/create-customer');
 const shopCreditWebhooks = require('./controllers/webhooks/shop-credit');
+const tunerCreditWebhooks = require('./controllers/webhooks/tuner-credit');
 
 /**
  * @param {import('express').Express} app 
@@ -165,6 +166,7 @@ function mountRoutes(app){
     app.post('/webhooks/create-customer', customerWebhooks.createCustomer)
     app.post('/webhooks/update-customer', customerWebhooks.updateCustomer)
     app.post('/webhooks/add-shop-credit', shopCreditWebhooks.AddShopCredit)
+    app.post('/webhooks/add-tuner-credit', tunerCreditWebhooks.AddTunerCredit)
 }
 
 module.exports = {
