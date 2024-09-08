@@ -33,7 +33,7 @@ module.exports = class TunerUserService{
         for(let line of data.line_items){
             if(line.name.toUpperCase() === CREDIT_ITEM_NAME){
                 found = true
-                creditAmount = Math.floor(parseFloat(line.subtotal))
+                creditAmount = Math.round(parseFloat(line.subtotal))
                 break
             }
         }
