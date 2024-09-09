@@ -15,6 +15,7 @@ const { CPCCompressionServer } = require('../micro-apps/cpc-compression/cpc-comp
 const { ByteReturnService } = require('../services/tools/bytereturn')
 const { Stream } = require('memorystream')
 const { parseIntNumber } = require('../helpers/data-helpers')
+const { CRCHackService } = require('../services/tools/CRCHack')
 
 module.exports = class ToolsController{
 
@@ -353,11 +354,13 @@ module.exports = class ToolsController{
         const options = req.query
         options.reverseInput = !!options.reverseInput
         options.reverseFinal = !!options.reverseFinal
-        const output = await ExternalProgramsService.bufferThruFS(
-            data,
-            (inFile, outFile) => ExternalProgramsService.crchack(inFile, outFile, options)
-        )
-        return output
+        const correctionOnly = !!options.correctionOnly
+        delete options.correctionOnly
+        if(correctionOnly){
+            return await CRCHackService.GetPatchCorrection(data, options)
+        }else{
+            return await CRCHackService.PatchData(data, options)
+        }
     }
 
     static async t_ByteReturn(req, res){
