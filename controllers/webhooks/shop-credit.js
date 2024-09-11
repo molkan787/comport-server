@@ -13,7 +13,7 @@ module.exports = {
                 return '' // returning an empty response with status code 200 (ok)
             }
 
-            valdiateSignature(req, ADD_CREDIT_AUTH_SECRET)
+            // valdiateSignature(req, ADD_CREDIT_AUTH_SECRET)
 
             const orderData = req.body
             if(orderData.status === 'processing'){

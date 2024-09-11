@@ -17,7 +17,26 @@ function grabData(output, dataPrefix){
     return null
 }
 
+/**
+ * 
+ * @param {string} target 
+ * @param {string | string[]} search 
+ */
+function contains(target, search){
+    const t = target.toLowerCase()
+    const ss = Array.isArray(search) ? search : [search]
+    const len = ss.length
+    for(let i = 0; i < len; i++){
+        const s = ss[i].toLowerCase()
+        if(t.includes(s)){
+            return true
+        }
+    }
+    return false
+}
+
 
 module.exports = {
     grabData,
+    contains,
 }

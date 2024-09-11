@@ -1,7 +1,14 @@
 const { ObjectId } = require("mongodb")
 const { coll } = require("../db")
+const { contains } = require("../helpers/text-kelpers")
 
-const CREDIT_ITEM_NAME = 'TUNER CREDITS'
+const PRODUCT_NAMES = [
+    'SHOP CREDIT',
+    'TUNER CREDIT',
+    'SHOP CREDITS',
+    'TUNER CREDITS',
+    'LICENSE',
+]
 
 module.exports = class ShopCredit{
 
@@ -31,7 +38,7 @@ module.exports = class ShopCredit{
         let creditAmount = 0
         let found = false
         for(let line of data.line_items){
-            if(line.name.toUpperCase() === CREDIT_ITEM_NAME){
+            if(contains(line.name, PRODUCT_NAMES)){
                 found = true
                 creditAmount = Math.floor(parseFloat(line.subtotal))
                 break
