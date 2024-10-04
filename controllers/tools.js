@@ -16,6 +16,7 @@ const { ByteReturnService } = require('../services/tools/bytereturn')
 const { Stream } = require('memorystream')
 const { parseIntNumber } = require('../helpers/data-helpers')
 const { CRCHackService } = require('../services/tools/CRCHack')
+const NotFoundError = require('../framework/errors/NotFoundError')
 
 module.exports = class ToolsController{
 
@@ -72,7 +73,7 @@ module.exports = class ToolsController{
                 return
             }
             let response = await tool(req, res)
-
+            
             if(response !== undefined){
                 if(Buffer.isBuffer(response)){
                     res.setHeader('content-type', 'application/octet-stream')
@@ -89,8 +90,8 @@ module.exports = class ToolsController{
                 res.status(500).send('Unknow error')
             }
         } catch (error) {
-            if(InvalidInputError.ItIs(error)){
-                res.status(400).send(error.message)
+            if(error.IsUserError){
+                res.status(error.HttpResponseCode).send(error.message)
             }else{
                 console.error(error)
                 res.status(500).send('Internal server error')
@@ -368,7 +369,11 @@ module.exports = class ToolsController{
         const nOffset = parseIntNumber(offset)
         const nLength = parseIntNumber(length)
         const readStream = await ByteReturnService.getBytes(folderName, fileName, nOffset, nLength)
-        return readStream
+        if(readStream){
+            return readStream
+        }else{
+            throw new NotFoundError('File not found.')
+        }
     }
 
     // TODO: IMPORTANT add seed and sec level sanitization in every external program exec function
