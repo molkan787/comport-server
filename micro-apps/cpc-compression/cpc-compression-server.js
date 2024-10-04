@@ -31,8 +31,9 @@ class CPCCompressionServer{
             exeAppFilename,
             "start-http-server",
             port.toString(),
+            "/nogui",
         ]
-        while(true){
+        for(let r = 0; r < 10; r++){
             try {
                 await spawn('wine', args, {}, (stdout, stderr) => {
                     if(stdout){
@@ -47,9 +48,12 @@ class CPCCompressionServer{
                 })
             } catch (error) {
                 console.error(error)
-                console.error('CPCCompressionServer Server Exited, Restarting it in 1 second.')
+                console.error('[CPCCompressionServer][SYSTEM] Server Exited, Restarting it in 1 second.')
             }
             await sleep(1000)
+            if(r === 9){
+                console.log('[CPCCompressionServer][SYSTEM] Max retry limit reached.')
+            }
         }
     }
 

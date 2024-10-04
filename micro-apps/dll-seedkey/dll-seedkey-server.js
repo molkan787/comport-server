@@ -27,7 +27,7 @@ class DLLSeekKeyServer{
             port.toString(),
             dlls_lib_folder,
         ]
-        while(true){
+        for(let r = 0; r < 10; r++){
             try {
                 await spawn('wine', args, {}, (stdout, stderr) => {
                     if(stdout){
@@ -42,9 +42,12 @@ class DLLSeekKeyServer{
                 })
             } catch (error) {
                 console.error(error)
-                console.error('Comport_SeedKeyDLL Server Exited, Restarting it in 1 second.')
+                console.error('[DLLSeekKeyServer][SYSTEM] Server Exited, Restarting it in 1 second.')
             }
             await sleep(1000)
+            if(r === 9){
+                console.log('[DLLSeekKeyServer][SYSTEM] Max retry limit reached.')
+            }
         }
     }
 
