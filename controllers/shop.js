@@ -28,7 +28,7 @@ const accessToCustomerValidator = (req, res) => {
 module.exports.uploadFirmware = (req, res) => WrapRouteHandler(
     // TODO: add check for `max_files_per_customer`
     req, res, [
-        () => validateShopUserType(req, res, ShopUserType.AdminTool),
+        () => validateShopUserType(req, res, [ShopUserType.AdminTool, ShopUserType.Reseller]),
         () => accessToCustomerValidator(req, res),
     ],
     async () => {
@@ -103,7 +103,7 @@ module.exports.getCustomerFiles = (req, res) => WrapRouteHandler(
 
 module.exports.deleteCustomerFile = (req, res) => WrapRouteHandler(
     req, res, [
-        () => validateShopUserType(req, res, ShopUserType.AdminTool),
+        () => validateShopUserType(req, res, [ShopUserType.AdminTool, ShopUserType.Reseller]),
         () => validateAccessToCustomer(req, res, req.query.customerId),
     ],
     async () => {
