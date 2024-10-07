@@ -70,7 +70,7 @@ module.exports.uploadFirmware = (req, res) => WrapRouteHandler(
 
 module.exports.getCustomerFiles = (req, res) => WrapRouteHandler(
     req, res, [
-        () => validateShopUserType(req, res, ShopUserType.AdminTool),
+        () => validateShopUserType(req, res, [ShopUserType.AdminTool, ShopUserType.Reseller]),
         () => accessToCustomerValidator(req, res),
     ],
     async () => {
