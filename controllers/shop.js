@@ -292,7 +292,8 @@ async function validateAccessToCustomer(req, res, customer){
 }
 
 function validateShopUserType(req, res, requiredUserType){
-    if(req.user.userType !== requiredUserType){
+    const allowedUserTypes = Array.isArray(requiredUserType) ? requiredUserType : [requiredUserType]
+    if(!allowedUserTypes.includes(req.user.userType)){
         throw new NoPermissionError('Current User does not have required access right.')
     }
     return true
@@ -360,7 +361,7 @@ module.exports.getCustomers = (req, res) => WrapRouteHandler(
 )
 
 module.exports.updateCustomer = (req, res) => WrapRouteHandler(
-    req, res, [() => validateShopUserType(req, res, ShopUserType.Reseller)],
+    req, res, [() => validateShopUserType(req, res, S[ShopUserType.Reseller, ShopUserType.AdminTool])],
     async () => {
         await ShopService.UpdateShopCustomer(req.user._id, req.params.customerId, req.body)
         return {}
@@ -368,17 +369,17 @@ module.exports.updateCustomer = (req, res) => WrapRouteHandler(
 )
 
 module.exports.createCustomer = (req, res) => WrapRouteHandler(
-    req, res, [() => validateShopUserType(req, res, ShopUserType.Reseller)],
+    req, res, [() => validateShopUserType(req, res, [ShopUserType.Reseller, ShopUserType.AdminTool])],
     () => ShopService.CreateShopCustomer(req.user._id, req.body)
 )
 
 module.exports.getFiles = (req, res) => WrapRouteHandler(
-    req, res, [() => validateShopUserType(req, res, ShopUserType.Reseller)],
+    req, res, [() => validateShopUserType(req, res, [ShopUserType.Reseller, ShopUserType.AdminTool])],
     () => ShopService.GetShopFiles(req.user._id)
 )
 
 module.exports.uploadFile = (req, res) => WrapRouteHandler(
-    req, res, [() => validateShopUserType(req, res, ShopUserType.Reseller)],
+    req, res, [() => validateShopUserType(req, res, [ShopUserType.Reseller, ShopUserType.AdminTool])],
     () => ShopService.UploadShopFile(
         req.user._id,
         req,
@@ -389,7 +390,7 @@ module.exports.uploadFile = (req, res) => WrapRouteHandler(
 )
 
 module.exports.deleteFile = (req, res) => WrapRouteHandler(
-    req, res, [() => validateShopUserType(req, res, ShopUserType.Reseller)],
+    req, res, [() => validateShopUserType(req, res, [ShopUserType.Reseller, ShopUserType.AdminTool])],
     () => ShopService.DeleteShopFile(req.user._id, req.params.fileId),
     { EmptyResponse: true }
 )
